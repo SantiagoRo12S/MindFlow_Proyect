@@ -365,8 +365,37 @@ textarea.form-input { resize:none; height:80px; line-height:1.5; }
    PERFIL
    ================================================ */
 .profile-avatar { width:72px; height:72px; border-radius:50%; background:var(--primary-light); display:flex; align-items:center; justify-content:center; font-size:30px; margin:0 auto 12px; }
-.profile-name   { text-align:center; font-size:18px; font-weight:600; color:var(--text); margin-bottom:4px; }
-.profile-email  { text-align:center; font-size:13px; color:var(--muted); margin-bottom:18px; }
+.profile-name   {
+  text-align:center; font-size:18px; font-weight:600; color:var(--text);
+  margin-bottom:2px; cursor:pointer; border-radius:8px; padding:4px 12px;
+  transition:background 0.18s; display:inline-block; width:100%;
+}
+.profile-name:hover { background:var(--primary-light); }
+.profile-edit-hint  { text-align:center; font-size:11px; color:var(--muted); margin-bottom:6px; }
+.profile-email  { text-align:center; font-size:13px; color:var(--muted); margin-bottom:16px; }
+
+/* Input edición de nombre */
+.nombre-input {
+  text-align:center; font-size:18px; font-weight:600; color:var(--text);
+  border:none; border-bottom:2px solid var(--primary); background:transparent;
+  outline:none; width:100%; font-family:'DM Sans',Arial,sans-serif;
+  padding:2px 8px; border-radius:0;
+}
+
+/* Racha card */
+.racha-card {
+  display:flex; align-items:center; justify-content:space-between;
+  background:linear-gradient(135deg, var(--primary-light) 0%, var(--accent-light) 100%);
+  border-radius:16px; padding:16px 18px; margin-bottom:16px;
+  border:1.5px solid var(--primary-light);
+}
+.racha-left  { display:flex; align-items:center; gap:12px; }
+.racha-ico   { font-size:32px; line-height:1; }
+.racha-titulo{ font-size:12px; font-weight:600; color:var(--primary-dark); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+.racha-mejor { font-size:11px; color:var(--muted); }
+.racha-num-wrap { text-align:right; }
+.racha-num   { font-size:42px; font-weight:700; color:var(--primary-dark); font-family:'DM Serif Display',serif; line-height:1; }
+.racha-dias-lbl { font-size:12px; color:var(--muted); display:block; text-align:right; margin-top:2px; }
 .perfil-mood-card { background:var(--bg); border-radius:12px; padding:14px; margin-bottom:16px; text-align:center; }
 .pmc-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
 .pmc-val   { font-size:18px; font-weight:600; color:var(--text); margin-bottom:3px; }

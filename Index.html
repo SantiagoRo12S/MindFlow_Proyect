@@ -296,8 +296,24 @@
     </header>
     <div class="scroll-area">
       <div class="profile-avatar">🌿</div>
-      <p class="profile-name" id="perfil-nombre">Usuario MindFlow</p>
+      <p class="profile-name" id="perfil-nombre" onclick="activarEdicionNombre()">Usuario MindFlow</p>
+      <p class="profile-edit-hint">Toca tu nombre para editarlo ✏️</p>
       <p class="profile-email" id="perfil-email-txt">usuario@mindflow.app</p>
+
+      <!-- WIDGET RACHA -->
+      <div class="racha-card">
+        <div class="racha-left">
+          <div class="racha-ico" id="racha-ico">✨</div>
+          <div>
+            <div class="racha-titulo">Racha actual</div>
+            <div class="racha-mejor" id="racha-mejor">Récord: 0 días</div>
+          </div>
+        </div>
+        <div class="racha-num-wrap">
+          <span class="racha-num" id="racha-num">0</span>
+          <span class="racha-dias-lbl">días</span>
+        </div>
+      </div>
 
       <!-- ESTADO MENTAL HOY + HISTORIAL DESPLEGABLE -->
       <div class="pmc-accordion" id="pmc-accordion" onclick="toggleMoodHistorial()">
@@ -468,13 +484,4 @@
     </div>
     <div class="nav-item" id="nav-perfil" onclick="cambiarTab('perfil')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span>Perfil</span>
-    </div>
-  </nav>
-
-  </div><!-- /app-main -->
-
-</div>
-<script src="js/app.js"></script>
-</body>
-</html>
+      <sp

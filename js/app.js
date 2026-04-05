@@ -41,6 +41,8 @@ var LS = {
   moodHistorial: 'mf_mood_historial',
   ejerciciosHoy: 'mf_ejercicios_hoy',
   historialFlow: 'mf_historial_flow',
+  racha:         'mf_racha',           // { actual, mejor, ultimaFecha }
+  nombreUsuario: 'mf_nombre_usuario',  // nombre editable por el usuario
   // mantener compatibilidad con auth
   usuarios:      'mf_usuarios',
   sesion:        'mf_sesion'
@@ -57,12 +59,15 @@ function inicializarLSParaUsuario(email) {
   LS.moodHistorial = prefix + 'mood_historial'
   LS.ejerciciosHoy = prefix + 'ejercicios_hoy'
   LS.historialFlow = prefix + 'historial_flow'
+  LS.racha         = prefix + 'racha'
+  LS.nombreUsuario = prefix + 'nombre_usuario'
   // Las claves globales no cambian
   LS.usuarios = 'mf_usuarios'
   LS.sesion   = 'mf_sesion'
 }
 
 var usuarioActual = null   // { email, nombre }
+var racha = { actual: 0, mejor: 0, ultimaFecha: '' }
 
 /* ================================================
    CATÁLOGO DE EJERCICIOS
@@ -108,6 +113,14 @@ function guardarEnStorage() {
   } catch(e) {}
 }
 
+function guardarRacha() {
+  try { localStorage.setItem(LS.racha, JSON.stringify(racha)) } catch(e) {}
+}
+
+function guardarNombreUsuario(nombre) {
+  try { localStorage.setItem(LS.nombreUsuario, nombre) } catch(e) {}
+}
+
 function guardarMoodStorage(estado, hora) {
   try {
     localStorage.setItem(LS.mood, JSON.stringify({ estado, hora, fecha: new Date().toDateString() }))
@@ -129,6 +142,24 @@ function cargarDesdeStorage() {
     var hf   = localStorage.getItem(LS.historialFlow)
     if (hf !== null) historialFlowScore = JSON.parse(hf)
     if (tc !== null) tareasCompletadas  = JSON.parse(tc)
+
+    // ── CARGAR RACHA ──────────────────────────────────────
+    var rg = localStorage.getItem(LS.racha)
+    if (rg) racha = JSON.parse(rg)
+    actualizarRacha()   // verifica si hay que sumar un día o romperla
+
+    // ── CARGAR NOMBRE EDITABLE ────────────────────────────
+    var nombreGuardado = localStorage.getItem(LS.nombreUsuario)
+    if (nombreGuardado) {
+      var pn = document.getElementById('perfil-nombre')
+      if (pn) pn.textContent = nombreGuardado
+      var sh = document.getElementById('header-saludo')
+      if (sh) {
+        var h   = new Date().getHours()
+        var sal = h<12?'Buenos días':h<18?'Buenas tardes':'Buenas noches'
+        sh.textContent = sal + ', ' + nombreGuardado
+      }
+    }
 
     // ── RESET DIARIO DEL FLOW SCORE ──────────────────────
     // Si el score guardado es de un día anterior → guardar en historial y resetear
@@ -499,6 +530,8 @@ function programarResetMedianoche() {
     refrescarUI()
     actualizarEjerciciosHoyUI()
     mostrarToast('🌅 ¡Nuevo día! Flow Score reiniciado')
+    // Actualizar racha del nuevo día
+    actualizarRacha()
     // Volver a programar para el siguiente día
     programarResetMedianoche()
   }, msHastaMedianoche)
@@ -574,6 +607,106 @@ function elegirMensajeContextual() {
 
 function fechaKey(d) {
   return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()
+}
+
+/* ================================================
+   RACHA DE DÍAS CONSECUTIVOS
+   ================================================ */
+function actualizarRacha() {
+  var hoy      = new Date().toDateString()
+  var ayer     = new Date(Date.now() - 86400000).toDateString()
+
+  if (racha.ultimaFecha === hoy) {
+    // Ya se contó hoy — solo actualizar UI
+    actualizarRachaUI()
+    return
+  }
+
+  if (racha.ultimaFecha === ayer) {
+    // Entró ayer → sumar un día
+    racha.actual++
+  } else if (racha.ultimaFecha === '') {
+    // Primera vez
+    racha.actual = 1
+  } else {
+    // Rompió la racha — más de un día sin entrar
+    racha.actual = 1
+  }
+
+  racha.ultimaFecha = hoy
+  if (racha.actual > racha.mejor) racha.mejor = racha.actual
+
+  guardarRacha()
+  actualizarRachaUI()
+}
+
+function actualizarRachaUI() {
+  var el = document.getElementById('racha-num')
+  if (el) el.textContent = racha.actual
+
+  var mejor = document.getElementById('racha-mejor')
+  if (mejor) mejor.textContent = 'Récord: ' + racha.mejor + ' día' + (racha.mejor !== 1 ? 's' : '')
+
+  // Emoji que cambia según la racha
+  var ico = document.getElementById('racha-ico')
+  if (ico) {
+    if      (racha.actual >= 30) ico.textContent = '🏆'
+    else if (racha.actual >= 14) ico.textContent = '🔥'
+    else if (racha.actual >= 7)  ico.textContent = '⚡'
+    else if (racha.actual >= 3)  ico.textContent = '🌱'
+    else                         ico.textContent = '✨'
+  }
+}
+
+/* ================================================
+   NOMBRE DE USUARIO EDITABLE
+   ================================================ */
+function activarEdicionNombre() {
+  var el = document.getElementById('perfil-nombre')
+  if (!el || el.querySelector('input')) return   // evitar doble activación
+
+  var nombreActual = el.textContent.trim()
+
+  el.innerHTML =
+    '<input id="nombre-input" class="nombre-input" type="text" ' +
+    'value="' + nombreActual + '" maxlength="30" ' +
+    'onblur="guardarNombreEditable()" ' +
+    'onkeydown="if(event.key===\'Enter\') this.blur(); if(event.key===\'Escape\') cancelarEdicionNombre(\'' + nombreActual + '\')"' +
+    '>'
+
+  var input = document.getElementById('nombre-input')
+  if (input) {
+    input.focus()
+    input.select()
+  }
+}
+
+function guardarNombreEditable() {
+  var input = document.getElementById('nombre-input')
+  if (!input) return
+
+  var nuevoNombre = input.value.trim()
+  if (!nuevoNombre) nuevoNombre = usuarioActual ? usuarioActual.nombre : 'Usuario'
+
+  // Actualizar UI
+  var el = document.getElementById('perfil-nombre')
+  if (el) el.textContent = nuevoNombre
+
+  // Actualizar saludo en header
+  var sh = document.getElementById('header-saludo')
+  if (sh) {
+    var h   = new Date().getHours()
+    var sal = h<12?'Buenos días':h<18?'Buenas tardes':'Buenas noches'
+    sh.textContent = sal + ', ' + nuevoNombre
+  }
+
+  guardarNombreUsuario(nuevoNombre)
+  mostrarToast('✏️ Nombre actualizado')
+}
+
+function cancelarEdicionNombre(nombreOriginal) {
+  var el = document.getElementById('perfil-nombre')
+  if (el) el.textContent = nombreOriginal
 }
 
 /* ================================================
