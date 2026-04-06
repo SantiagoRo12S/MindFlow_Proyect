@@ -288,18 +288,33 @@ function iniciarSplash() {
       setTimeout(function() { verificarSesion() }, 200)
     }
   }, 40)
+
+  // Seguro de emergencia: si en 5 segundos no avanzó, forzar login
+  setTimeout(function() {
+    clearInterval(intervalo)
+    verificarSesion()
+  }, 5000)
 }
 
 function verificarSesion() {
   try {
-    var sesionGuardada = localStorage.getItem(LS.sesion)
+    // LS.sesion siempre apunta a la clave global 'mf_sesion' (sin prefijo)
+    var sesionGuardada = localStorage.getItem('mf_sesion')
     if(sesionGuardada) {
       usuarioActual = JSON.parse(sesionGuardada)
-      arrancarApp()
+      if(usuarioActual && usuarioActual.email) {
+        inicializarLSParaUsuario(usuarioActual.email)
+        arrancarApp()
+      } else {
+        irA('screen-login')
+      }
     } else {
       irA('screen-login')
     }
-  } catch(e) { irA('screen-login') }
+  } catch(e) {
+    console.error('Error verificando sesión:', e)
+    irA('screen-login')
+  }
 }
 
 /* ── Navegar entre pantallas de auth ── */
@@ -332,9 +347,6 @@ function arrancarApp() {
   if(pn) pn.textContent = nombre
   var pe = document.getElementById('perfil-email-txt')
   if(pe) pe.textContent = usuarioActual ? usuarioActual.email : ''
-
-  // Prefixar claves con el email del usuario → datos separados por cuenta
-  inicializarLSParaUsuario(usuarioActual.email)
 
   pedirPermisoNotificaciones()
   initMoodCarousel()
@@ -371,7 +383,8 @@ function hacerRegistro() {
 
   // Login automático tras registro
   usuarioActual = { email: email, nombre: nombre }
-  localStorage.setItem(LS.sesion, JSON.stringify(usuarioActual))
+  localStorage.setItem('mf_sesion', JSON.stringify(usuarioActual))
+  inicializarLSParaUsuario(email)
   arrancarApp()
 }
 
@@ -399,7 +412,8 @@ function hacerLogin() {
   }
 
   usuarioActual = { email: email, nombre: user.nombre }
-  localStorage.setItem(LS.sesion, JSON.stringify(usuarioActual))
+  localStorage.setItem('mf_sesion', JSON.stringify(usuarioActual))
+  inicializarLSParaUsuario(email)
   arrancarApp()
 }
 
@@ -420,12 +434,13 @@ function hacerRecuperar() {
    CERRAR SESIÓN
    ================================================ */
 function cerrarSesion() {
-  localStorage.removeItem(LS.sesion)
+  localStorage.removeItem('mf_sesion')
   usuarioActual = null
+  racha = { actual: 0, mejor: 0, ultimaFecha: '' }
   // Resetear estado en memoria
   recordatorios = []; flowScore = 0; tareasCompletadas = 0
   moodHistorial = []; ejerciciosHoy = 0; historialFlowScore = {}
-  // Resetear claves LS a valores genéricos (se re-inicializarán al próximo login)
+  // Resetear claves LS a valores genéricos
   LS.recordatorios = 'mf_recordatorios'
   LS.flowScore     = 'mf_flowscore'
   LS.flowFecha     = 'mf_flowfecha'
@@ -434,6 +449,8 @@ function cerrarSesion() {
   LS.moodHistorial = 'mf_mood_historial'
   LS.ejerciciosHoy = 'mf_ejercicios_hoy'
   LS.historialFlow = 'mf_historial_flow'
+  LS.racha         = 'mf_racha'
+  LS.nombreUsuario = 'mf_nombre_usuario'
   // Limpiar lista visual
   var lista = document.getElementById('lista')
   if(lista) lista.innerHTML = '<div class="empty-state" id="empty-msg"><div class="empty-icon">🧘</div><p>No hay recordatorios aún.<br>Crea uno consciente con el botón <strong>+</strong></p></div>'
