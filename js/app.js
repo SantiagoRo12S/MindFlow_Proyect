@@ -278,59 +278,60 @@ document.addEventListener('DOMContentLoaded', function() {
 })
 
 function iniciarSplash() {
-  var fill  = document.getElementById('splash-bar-fill')
-  var pct   = 0
+  // Asegurar que solo el splash sea visible al inicio
+  document.querySelectorAll('.auth-screen').forEach(function(s) {
+    if (s.id !== 'screen-splash') s.classList.add('oculto')
+  })
+  var main = document.getElementById('app-main')
+  if (main) main.classList.add('oculto')
+
+  var fill = document.getElementById('splash-bar-fill')
+  var pct  = 0
+
   var intervalo = setInterval(function() {
     pct += 4
-    if(fill) fill.style.width = Math.min(pct, 100) + '%'
-    if(pct >= 100) {
+    if (fill) fill.style.width = Math.min(pct, 100) + '%'
+    if (pct >= 100) {
       clearInterval(intervalo)
-      setTimeout(function() { verificarSesion() }, 200)
+      setTimeout(verificarSesion, 300)
     }
   }, 40)
-
-  // Seguro de emergencia: si en 5 segundos no avanzó, forzar login
-  setTimeout(function() {
-    clearInterval(intervalo)
-    verificarSesion()
-  }, 5000)
 }
 
 function verificarSesion() {
   try {
-    // LS.sesion siempre apunta a la clave global 'mf_sesion' (sin prefijo)
-    var sesionGuardada = localStorage.getItem('mf_sesion')
-    if(sesionGuardada) {
-      usuarioActual = JSON.parse(sesionGuardada)
-      if(usuarioActual && usuarioActual.email) {
-        inicializarLSParaUsuario(usuarioActual.email)
+    var raw = localStorage.getItem('mf_sesion')
+    if (raw) {
+      var sesion = JSON.parse(raw)
+      if (sesion && sesion.email) {
+        usuarioActual = sesion
+        inicializarLSParaUsuario(sesion.email)
         arrancarApp()
-      } else {
-        irA('screen-login')
+        return
       }
-    } else {
-      irA('screen-login')
     }
-  } catch(e) {
-    console.error('Error verificando sesión:', e)
-    irA('screen-login')
-  }
+  } catch(e) {}
+  irA('screen-login')
 }
 
 /* ── Navegar entre pantallas de auth ── */
 function irA(pantallaId) {
-  document.querySelectorAll('.auth-screen').forEach(function(s){ s.classList.add('oculto') })
+  document.querySelectorAll('.auth-screen').forEach(function(s) {
+    s.classList.add('oculto')
+  })
   var destino = document.getElementById(pantallaId)
-  if(destino) destino.classList.remove('oculto')
+  if (destino) destino.classList.remove('oculto')
 }
 
 /* ── Iniciar la app después del login ── */
 function arrancarApp() {
-  // Ocultar todas las pantallas de auth
-  document.querySelectorAll('.auth-screen').forEach(function(s){ s.classList.add('oculto') })
+  // Ocultar splash y todas las pantallas de auth
+  document.querySelectorAll('.auth-screen').forEach(function(s) {
+    s.classList.add('oculto')
+  })
   // Mostrar app principal
   var main = document.getElementById('app-main')
-  if(main) main.classList.remove('oculto')
+  if (main) main.classList.remove('oculto')
 
   // Personalizar saludo con nombre de usuario
   var d   = new Date()
