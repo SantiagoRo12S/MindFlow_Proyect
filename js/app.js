@@ -282,6 +282,8 @@ function iniciarSplash() {
   document.querySelectorAll('.auth-screen').forEach(function(s) {
     if (s.id !== 'screen-splash') s.classList.add('oculto')
   })
+  var splash = document.getElementById('screen-splash')
+  if (splash) splash.classList.add('active')
   var main = document.getElementById('app-main')
   if (main) main.classList.add('oculto')
 
@@ -317,10 +319,14 @@ function verificarSesion() {
 /* ── Navegar entre pantallas de auth ── */
 function irA(pantallaId) {
   document.querySelectorAll('.auth-screen').forEach(function(s) {
+    s.classList.remove('active')
     s.classList.add('oculto')
   })
   var destino = document.getElementById(pantallaId)
-  if (destino) destino.classList.remove('oculto')
+  if (destino) {
+    destino.classList.remove('oculto')
+    destino.classList.add('active')
+  }
 }
 
 /* ── Iniciar la app después del login ── */
